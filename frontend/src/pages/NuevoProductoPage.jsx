@@ -15,6 +15,13 @@ export default function NuevoProductoPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'nombre') {
+      if (value.length > 40) {
+        e.target.setCustomValidity('El nombre del producto no puede superar los 40 caracteres.');
+      } else {
+        e.target.setCustomValidity('');
+      }
+    }
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -27,6 +34,17 @@ export default function NuevoProductoPage() {
 
     if (!formData.nombre || formData.cantidad === '' || formData.precio === '') {
       setStatusMessage({ type: 'error', text: 'Por favor, completa todos los campos obligatorios.' });
+      return;
+    }
+
+    if (formData.nombre.length > 40) {
+      setStatusMessage({ type: 'error', text: 'El nombre del producto no puede superar los 40 caracteres.' });
+      return;
+    }
+
+    const precioNum = parseFloat(formData.precio);
+    if (isNaN(precioNum) || precioNum <= 0) {
+      setStatusMessage({ type: 'error', text: 'el valor debe ser superior a 0' });
       return;
     }
 
@@ -58,7 +76,7 @@ export default function NuevoProductoPage() {
       });
 
       setTimeout(() => {
-        navigate('/');
+        navigate('/', { state: { notification: `¡Producto "${data.producto.nombre}" guardado exitosamente!` } });
       }, 1200);
 
     } catch (err) {
@@ -150,9 +168,14 @@ export default function NuevoProductoPage() {
                 step="0.01"
                 id="precio"
                 name="precio"
-                min="0"
+                min="0.01"
                 value={formData.precio}
                 onChange={handleChange}
+                onInvalid={(e) => e.target.setCustomValidity('el valor debe ser superior a 0')}
+                onInput={(e) => {
+                  e.target.setCustomValidity('');
+                  handleChange(e);
+                }}
                 placeholder="Ej: 150.99"
                 required
                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-slate-900 text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"

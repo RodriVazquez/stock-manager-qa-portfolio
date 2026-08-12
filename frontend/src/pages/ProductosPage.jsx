@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Minus, RefreshCw, AlertTriangle, Search, Layers } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { Package, Plus, Minus, RefreshCw, AlertTriangle, Search, Layers, CheckCircle2, ArrowUpRight, ArrowDownRight, X } from 'lucide-react';
 import StockModal from '../components/StockModal';
 
 export default function ProductosPage() {
+  const location = useLocation();
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [notification, setNotification] = useState(null);
 
   // Modal State
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -32,6 +35,28 @@ export default function ProductosPage() {
     fetchProductos();
   }, []);
 
+  // Check for navigation notification (e.g. from NuevoProductoPage)
+  useEffect(() => {
+    if (location.state?.notification) {
+      setNotification({
+        type: 'creado',
+        title: 'Producto Creado',
+        message: location.state.notification
+      });
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  // Auto-dismiss notification after 5 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
   const handleOpenModal = (producto, tipo) => {
     setSelectedProduct(producto);
     setModalType(tipo);
@@ -48,6 +73,23 @@ export default function ProductosPage() {
     if (!res.ok) {
       const errData = await res.json();
       throw new Error(errData.error || 'Error al actualizar el stock');
+    }
+
+    const prod = productos.find(p => p.id === productoId);
+    const prodName = prod ? prod.nombre : 'Producto';
+
+    if (tipo === 'ENTRADA') {
+      setNotification({
+        type: 'entrada',
+        title: 'Entrada de Stock Registrada',
+        message: `¡Se agregaron ${cantidad} unidad(es) de stock a "${prodName}"!`
+      });
+    } else {
+      setNotification({
+        type: 'salida',
+        title: 'Salida de Stock Registrada',
+        message: `¡Se descontaron/quitaron ${cantidad} unidad(es) de stock a "${prodName}"!`
+      });
     }
 
     await fetchProductos();
@@ -86,6 +128,46 @@ export default function ProductosPage() {
           <span>Actualizar Tabla</span>
         </button>
       </div>
+
+      {/* Notification Toast Banner */}
+      {notification && (
+        <div className={`p-4 rounded-lg border shadow-xs flex items-center justify-between transition-all ${
+          notification.type === 'entrada'
+            ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+            : notification.type === 'salida'
+            ? 'bg-amber-50 border-amber-300 text-amber-900'
+            : 'bg-blue-50 border-blue-300 text-blue-900'
+        }`}>
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-md ${
+              notification.type === 'entrada'
+                ? 'bg-emerald-200/80 text-emerald-800'
+                : notification.type === 'salida'
+                ? 'bg-amber-200/80 text-amber-800'
+                : 'bg-blue-200/80 text-blue-800'
+            }`}>
+              {notification.type === 'entrada' ? (
+                <ArrowUpRight className="w-5 h-5" />
+              ) : notification.type === 'salida' ? (
+                <ArrowDownRight className="w-5 h-5" />
+              ) : (
+                <CheckCircle2 className="w-5 h-5" />
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider">{notification.title}</p>
+              <p className="text-sm font-medium mt-0.5">{notification.message}</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setNotification(null)}
+            className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-black/5 transition"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* KPI Metric Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -219,6 +301,14 @@ export default function ProductosPage() {
           </table>
         </div>
       </div>
+
+      <StockModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        producto={selectedProduct}
+        tipo={modalType}
+        onConfirm={handleStockSubmit}
+      />
 
     </div>
   );

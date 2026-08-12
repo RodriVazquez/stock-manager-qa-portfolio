@@ -63,6 +63,14 @@ app.post('/api/productos', async (req, res) => {
             return res.status(400).json({ error: 'Cantidad y precio deben ser valores numéricos válidos.' });
         }
 
+        if (nombre.length > 40) {
+            return res.status(400).json({ error: 'El nombre del producto no puede superar los 40 caracteres.' });
+        }
+
+        if (rawPrecio <= 0) {
+            return res.status(400).json({ error: 'El valor debe ser superior a 0.' });
+        }
+
         // BUG 3: Truncamiento intencional del precio (se elimina el decimal)
         const precioTruncado = Math.floor(rawPrecio);
 

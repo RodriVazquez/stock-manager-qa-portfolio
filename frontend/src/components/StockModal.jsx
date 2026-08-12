@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ArrowUpRight, ArrowDownRight, AlertCircle } from 'lucide-react';
 
 export default function StockModal({ isOpen, onClose, producto, tipo, onConfirm }) {
@@ -38,9 +39,9 @@ export default function StockModal({ isOpen, onClose, producto, tipo, onConfirm 
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-      <div className="relative w-full max-w-md bg-white border border-slate-300 rounded-lg shadow-xl p-6 overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 top-0 left-0 w-screen h-screen z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="relative w-full max-w-md bg-white border border-slate-300 rounded-lg shadow-2xl p-6 overflow-hidden">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-200">
@@ -121,6 +122,7 @@ export default function StockModal({ isOpen, onClose, producto, tipo, onConfirm 
         </form>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
